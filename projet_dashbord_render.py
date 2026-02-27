@@ -12,28 +12,22 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
-# =========================================================
-# APP
-# =========================================================
+
 app = Dash(__name__, serve_locally=True, suppress_callback_exceptions=True)
 app.title = "Dashboard Nutritionnel France"
 
-# ✅ IMPORTANT POUR RENDER / GUNICORN
+
 server = app.server
 
 
-# =========================================================
-# UTIL
-# =========================================================
+
 def safe_load(path, fallback_cols):
     if os.path.exists(path):
         return pd.read_csv(path)
     return pd.DataFrame(columns=fallback_cols)
 
 
-# =========================================================
-# PAGE 1 DATA
-# =========================================================
+
 df1 = safe_load("Fichier1_Nutriscore_Categories.csv", ["main_category_en", "nutriscore_grade"])
 
 if df1.empty:
@@ -79,16 +73,14 @@ df1 = df1[df1["nutriscore_grade"].isin(["a", "b", "c", "d", "e"])]
 all_categories_p1 = sorted(df1["category_clean"].unique())
 
 
-# =========================================================
-# PAGE 2 DATA (nutriments)
-# =========================================================
+
 PATH_P2 = "Fichier4_.csv"
 NUTRIENT_COLS = ['sugars_100g', 'fat_100g', 'saturated-fat_100g', 'salt_100g', 'fiber_100g', 'proteins_100g']
 
 if os.path.exists(PATH_P2):
     df2 = pd.read_csv(PATH_P2)
 
-    # base required columns
+
     if 'nutriscore_grade' not in df2.columns:
         df2['nutriscore_grade'] = np.nan
     if 'main_category_en' not in df2.columns:
@@ -99,7 +91,7 @@ if os.path.exists(PATH_P2):
     df2['nutriscore_grade'] = df2['nutriscore_grade'].astype(str).str.upper().str.strip()
     df2 = df2[df2['nutriscore_grade'].isin(['A', 'B', 'C', 'D', 'E'])]
 
-    # ensure nutrient columns
+
     for col in NUTRIENT_COLS:
         if col not in df2.columns:
             df2[col] = np.nan
@@ -142,9 +134,7 @@ else:
     all_categories_p2 = []
 
 
-# =========================================================
-# PAGE 3 MODEL
-# =========================================================
+
 DATA_PATH = "Fichier4.csv"
 MODEL_PATH = "nutriscore_lr.joblib"
 TARGET = "nutriscore_grade"
@@ -167,7 +157,7 @@ def get_or_train():
     df[TARGET] = df[TARGET].astype(str).str.strip().str.lower()
     df = df[df[TARGET].isin(VALID_GRADES)]
 
-    # ensure features exist
+
     for f in FEATURES:
         if f not in df.columns:
             df[f] = np.nan
@@ -190,7 +180,7 @@ def get_or_train():
 model4, acc4 = get_or_train()
 
 
-# Pie chart data (Fichier_3.csv)
+
 if os.path.exists("Fichier_3.csv"):
     df3 = pd.read_csv("Fichier_3.csv")
     if "nutriscore_grade" not in df3.columns:
@@ -209,9 +199,7 @@ fig_pie = px.pie(
 fig_pie.update_layout(showlegend=True, margin=dict(t=0, b=0, l=0, r=0), height=300)
 
 
-# =========================================================
-# COMMON COMPONENTS
-# =========================================================
+
 def input_row(label, id_, placeholder):
     return html.Div([
         html.Label(f"{label} :", style={'flex': '1', 'fontWeight': 'bold', 'fontSize': '14px'}),
@@ -255,9 +243,7 @@ def make_header(active_page):
     )
 
 
-# =========================================================
-# PAGE LAYOUTS
-# =========================================================
+
 def layout_page1():
     return html.Div(style={'fontFamily': 'Arial, sans-serif', 'backgroundColor': '#f4f7f9', 'paddingBottom': '50px'}, children=[
         make_header(1),
@@ -421,18 +407,14 @@ def layout_page3():
     ])
 
 
-# =========================================================
-# MAIN LAYOUT
-# =========================================================
+
 app.layout = html.Div([
     dcc.Store(id='current-page', data=1),
     html.Div(id='page-content')
 ])
 
 
-# =========================================================
-# NAVIGATION CALLBACKS
-# =========================================================
+
 @app.callback(
     Output('current-page', 'data'),
     [Input('btn-page-1', 'n_clicks'),
@@ -466,9 +448,7 @@ def render_page(page):
     return layout_page1()
 
 
-# =========================================================
-# PAGE 1 CALLBACK
-# =========================================================
+
 @app.callback(
     [Output('kpi-container', 'children'),
      Output('nutriscore-hist-1', 'figure'),
@@ -520,9 +500,7 @@ def update_dashboard_p1(selected_categories):
     return kpis, fig, f"Répartition des produits selon leur Nutri-Score : {title_suffix}"
 
 
-# =========================================================
-# PAGE 2 CALLBACK
-# =========================================================
+
 NUTRIENT_LABELS = {
     'sugars_100g': 'Sucre',
     'fat_100g': 'Matières grasses',
@@ -549,7 +527,7 @@ def update_dashboard_p2(selected_categories, selected_nutrient):
 
     nutrient_label = NUTRIENT_LABELS.get(selected_nutrient, selected_nutrient)
 
-    # if df2 missing (no file)
+
     if df2 is None or df2.empty:
         fig_vide = go.Figure()
         fig_vide.update_layout(
@@ -567,7 +545,7 @@ def update_dashboard_p2(selected_categories, selected_nutrient):
             f"Moyennes de {nutrient_label.lower()} (g/100g) par catégorie et Nutri-Score"
         )
 
-    # if column missing
+
     if selected_nutrient not in df2.columns:
         fig_vide = go.Figure()
         fig_vide.update_layout(
@@ -621,7 +599,7 @@ def update_dashboard_p2(selected_categories, selected_nutrient):
         html.P(f"Taux de {nutrient_label.lower()} moyen cumulé / 100g", style={'color': '#7f8c8d', 'fontSize': '13px'})
     ]
 
-    # category cards
+
     cat_stats = dff.groupby('category_clean')[selected_nutrient].mean().sort_values(ascending=False)
     cat_cards = [
         html.Div([
@@ -633,14 +611,14 @@ def update_dashboard_p2(selected_categories, selected_nutrient):
         for cat, val in cat_stats.items()
     ]
 
-    # heatmap
+
     pdf = dff.groupby(['category_clean', 'nutriscore_grade'])[selected_nutrient].mean().reset_index()
     pivot_table = pdf.pivot(index='category_clean', columns='nutriscore_grade', values=selected_nutrient)
 
     available_grades = [g for g in ["A", "B", "C", "D", "E"] if g in pivot_table.columns]
     pivot_table = pivot_table[available_grades]
 
-    # Nutri-Score-like scale
+
     nutriscore_colorscale = [
         [0.0,  '#008b4c'],
         [0.25, '#80bc29'],
@@ -673,9 +651,7 @@ def update_dashboard_p2(selected_categories, selected_nutrient):
     return products_card, global_card, cat_cards, fig, graph_title
 
 
-# =========================================================
-# PAGE 3 CALLBACK (prediction)
-# =========================================================
+
 @app.callback(
     Output("pred_bar", "children"),
     Input("btn_predict", "n_clicks"),
@@ -698,9 +674,7 @@ def do_predict(n, energy, fat, satfat, carb, sugars, fiber, proteins, salt):
     return f"Prédiction: Nutri-Score: {pred}"
 
 
-# =========================================================
-# RUN
-# =========================================================
+
 if __name__ == "__main__":
-    # ✅ local + Render friendly
+
     app.run(host="0.0.0.0", port=8050, debug=False)
