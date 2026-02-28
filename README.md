@@ -15,7 +15,7 @@ Proposer un outil accessible à un public non spécialiste
 #Accès à l’application
 Le dashboard est disponible en ligne à l’adresse suivante :
 https://dashboard-d-analyse-des-indicateurs.onrender.com
-⚠️ L’application est hébergée sur Render. Le premier chargement peut prendre jusqu’à 10 minutes. Il est recommandé d’attendre sans fermer la page.
+Attention: L’application est hébergée sur Render. Le premier chargement peut prendre jusqu’à 10 minutes. Il est recommandé d’attendre sans fermer la page.
 
 #Structure du dashboard
 Le dashboard est composé de trois pages principales, accessibles grâce aux boutons circulaires situés sous le titre :
